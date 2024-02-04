@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ludus Beach Liga Razvrstitev</title>
+    <style>
+        table { 
+            border-collapse: collapse; 
+        }
+
+        tbody th {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+        }
+        th, td {
+            padding: 5px;
+            white-space: nowrap;
+        }
+        tr {
+            border-top: 1px solid #666;
+        }
+        tr.league {
+            border-top: 3px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ludus beach liga razvrstitev </h1>
+    <table id="leaderboard">
+        <thead>
+            <tr>
+                <th>Liga</th>
+                <th>Mesto</th>
+                <th>1. krog</th>
+                <th>2. krog</th>
+                <th>3. krog</th>
+                <th>4. krog</th>
+                <th>5. krog</th>
+                <th>6. krog</th>
+                <th>7. krog</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script>
+        async function getRawData() {
+            return await (await fetch('/data.json')).json()
+
+            const list_of_links = await (await fetch('/links.txt')).text()
+            const pairs = list_of_links.split('\n').map(
+                line => line.split(' ')
+            )
+            return await Promise.all(pairs.map(
+                async ([name, link]) => {
+                    let response = await fetch(link)
+                    let text = await response.text()
+                    return [name, text]
+                }
+            ))
+        }
+
+        function parseCsv(txt) {
+            return txt.split('\r\n').map(
+                line => line.split(',')
+            )
+        }
+
+        function findFinalRank(data, row, col) {
+            const rank = 'KONČNA RAZVRSTITEV'
+            if (row != undefined && col != undefined && data[row][col] == rank) {
+                return [row, col]
+            }
+            for (let i = 0; i < data.length; i++) {
+                for (let j = 0; j < data[i].length; j++) {
+                    if (data[i][j] == rank) {
+                        return [i, j]
+                    }
+                }
+            }
+            return [null, null]
+        }
+
+        function extractFinalRank(data, row, col) {
+            const result = []
+            col++
+            for (let i = row + 1; i < data.length; i++) {
+                if (data[i][col] == '') {
+                    break
+                }
+                result.push(data[i][col])
+            }
+            return result
+        }
+
+        function extractMeta(name) {
+            [sex, _, league, _, round] = name.split('_')
+            return {sex, league, round}
+        }
+
+        async function getData() {
+            const rawData = await getRawData()
+            rawData.sort()
+            const data = rawData.map(
+                ([name, txt]) => [name, parseCsv(txt)]
+            )
+            const result = data.map(
+                ([name, csv]) => {
+                    const [row, col] = findFinalRank(csv)
+                    if (row == null) {
+                        return [name, [], extractMeta(name)]
+                    }
+                    const finalRank = extractFinalRank(csv, row, col)
+                    return [name, finalRank, extractMeta(name)]
+                }
+            )
+            return result
+        }
+
+        function transposeToRows(data) {
+            const transpose = (matrix) => {
+                const rows = matrix.length;
+                const cols = matrix.reduce((maxLen, row) => Math.max(maxLen, row.length), 0);
+                const result = Array.from({length: cols}, () => Array(rows).fill(""));
+                console.log(result, matrix, rows, cols)
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < matrix[i].length; j++) {
+                        result[j][i] = matrix[i][j];
+                    }
+                }
+                return result;
+            }
+            const result = []
+            let prevMeta = {round: 0};
+            let group = []
+            for ([name, ranks, meta] of data) {
+                if (prevMeta.round > meta.round) {
+                    result.push([prevMeta, transpose(group)])
+                    group = []
+                }
+                group.push(ranks)
+                prevMeta = meta
+            }
+            result.push([prevMeta, transpose(group)])
+            return result
+        }
+
+        function renderTable(data) {
+            const table = document.querySelector('#leaderboard tbody')
+            const rows = transposeToRows(data)
+            const sex = {m: 'Moški', ž: 'Ženske'}
+            let rank = 1
+            for ([meta, ranks] of rows) {
+                table.appendChild(renderRow(ranks[0], rank++, `${sex[meta.sex]} ${meta.league}`, ranks.length))
+                for (let row of ranks.splice(1)) {
+                    table.appendChild(renderRow(row, rank++))
+                }
+            }
+        }
+
+        function renderRow(row, rank, league, numRows) {
+            const tr = document.createElement('tr')
+            if (league) {
+                const th = document.createElement('th')
+                th.textContent = league
+                th.rowSpan = numRows
+                tr.appendChild(th)
+                tr.classList.add('league')
+            }
+            const rankTd = document.createElement('td')
+            rankTd.textContent = rank
+            tr.appendChild(rankTd)
+            for (let cell of row) {
+                const td = document.createElement('td')
+                td.textContent = cell
+                tr.appendChild(td)
+            }
+            return tr
+        }
+
+        function main() {
+            getData().then(renderTable)
+        }
+
+        main()
+
+    </script>
+</body>
+</html>
