@@ -44,9 +44,9 @@
     </table>
     <script>
         async function getRawData() {
-            return await (await fetch('/data.json')).json()
+            return await (await fetch('data.json')).json()
 
-            const list_of_links = await (await fetch('/links.txt')).text()
+            const list_of_links = await (await fetch('links.txt')).text()
             const pairs = list_of_links.split('\n').map(
                 line => line.split(' ')
             )
