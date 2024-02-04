@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Ludus Beach Liga Razvrstitev</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         table { 
             border-collapse: collapse; 
@@ -21,10 +22,31 @@
         tr.league {
             border-top: 3px solid black;
         }
+
+        table {
+            display: block;
+            overflow: auto;
+        }
+
+        td.highlight {
+            font-weight: bold;
+            color: red;
+            background-color: yellow;
+        }
+
+        .hidden {
+            display: none;
+        }
+        .hidden.not-hidden {
+            display: initial;
+        }
+
     </style>
 </head>
 <body>
     <h1>Ludus beach liga razvrstitev </h1>
+    <h3>Podatki so iz <span id="dataAge">2024-02-03</span> <button onclick="reloadData()" id="reload">refresh</button></h3>
+    <input type="text" id="search" oninput="highlightCells(this.value)" placeholder="Isci ekipe"/>
     <table id="leaderboard">
         <thead>
             <tr>
@@ -39,24 +61,66 @@
                 <th>7. krog</th>
             </tr>
         </thead>
-        <tbody>
-        </tbody>
     </table>
     <script>
+        function highlightCells(txt) {
+            txt = txt.toLowerCase().replace(/ /g, '')
+            for (cell of document.querySelectorAll('td')) {
+                cell.classList.remove('highlight')
+                cell.parentElement.parentElement.classList.remove('not-hidden')
+                cell.parentElement.parentElement.classList.remove('hidden')
+            }
+            if (txt == "") {
+                return
+            }
+            for (cell of document.querySelectorAll('td')) {
+                cell.parentElement.parentElement.classList.add('hidden')
+            }
+            for (cell of document.querySelectorAll('td')) {
+                if (cell.textContent.toLowerCase().replace(/ /g, '').includes(txt)) {
+                    cell.classList.add('highlight')
+                    cell.parentElement.parentElement.classList.remove('hidden')
+                }
+            }
+        }
         async function getRawData() {
-            return await (await fetch('data.json')).json()
+            const dataAge = localStorage.getItem('dataAge')
+            if (dataAge == null) {
+                const result = await (await fetch('data.json')).json()
+                localStorage.setItem('data', JSON.stringify(result))
+                localStorage.setItem('dataAge', +new Date(2024, 2, 3))
+                return result
+            }
+            document.getElementById('dataAge').textContent = new Date(+dataAge).toString()
+            return JSON.parse(localStorage.getItem('data'))
+        }
 
+        function getDataAge() {
+            return localStorage.getItem('dataAge')
+        }
+
+        async function reloadData() {
+            const button = document.getElementById('reload')
+            button.disabled = true
             const list_of_links = await (await fetch('links.txt')).text()
             const pairs = list_of_links.split('\n').map(
                 line => line.split(' ')
             )
-            return await Promise.all(pairs.map(
+            const result = await Promise.all(pairs.map(
                 async ([name, link]) => {
                     let response = await fetch(link)
+                    if (response.status >= 400) {
+                        console.log(`Failed to fetch ${name} using ${link}`)
+                        return [name, '']
+                    }
                     let text = await response.text()
                     return [name, text]
                 }
             ))
+            localStorage.setItem('data', JSON.stringify(result))
+            localStorage.setItem('dataAge', +Date.now())
+            main()
+            button.disabled = false
         }
 
         function parseCsv(txt) {
@@ -121,7 +185,6 @@
                 const rows = matrix.length;
                 const cols = matrix.reduce((maxLen, row) => Math.max(maxLen, row.length), 0);
                 const result = Array.from({length: cols}, () => Array(rows).fill(""));
-                console.log(result, matrix, rows, cols)
                 for (let i = 0; i < rows; i++) {
                     for (let j = 0; j < matrix[i].length; j++) {
                         result[j][i] = matrix[i][j];
@@ -145,15 +208,23 @@
         }
 
         function renderTable(data) {
-            const table = document.querySelector('#leaderboard tbody')
+            const table = document.querySelector('#leaderboard')
             const rows = transposeToRows(data)
             const sex = {m: 'Moški', ž: 'Ženske'}
             let rank = 1
+            let prevLen = 0
+            let prevSex = ''
             for ([meta, ranks] of rows) {
-                table.appendChild(renderRow(ranks[0], rank++, `${sex[meta.sex]} ${meta.league}`, ranks.length))
-                for (let row of ranks.splice(1)) {
-                    table.appendChild(renderRow(row, rank++))
+                const tbody = document.createElement('tbody')
+                const correction = meta.league.endsWith('b') ? prevLen : 0
+                if (prevSex != meta.sex) rank = 1
+                prevSex = meta.sex
+                prevLen = ranks.length
+                tbody.appendChild(renderRow(ranks[0], rank++ - correction, `${sex[meta.sex]} ${meta.league}`, ranks.length))
+                for (let row of ranks.slice(1)) {
+                    tbody.appendChild(renderRow(row, rank++ - correction))
                 }
+                table.appendChild(tbody)
             }
         }
 
@@ -172,6 +243,11 @@
             for (let cell of row) {
                 const td = document.createElement('td')
                 td.textContent = cell
+                td.addEventListener('click', () => {
+                    const search = document.getElementById('search')
+                    search.value = cell
+                    search.dispatchEvent(new Event('input'));
+                })
                 tr.appendChild(td)
             }
             return tr

@@ -9,7 +9,7 @@ m_liga_5a_krog_1 https://docs.google.com/spreadsheets/d/1vmetzQco7xx0WRsiwCDyjVm
 m_liga_5b_krog_1 https://docs.google.com/spreadsheets/d/1vmetzQco7xx0WRsiwCDyjVmbIZguQk3R/export?format=csv&gid=799737445
 ž_liga_1_krog_1 https://docs.google.com/spreadsheets/d/19nrncP9Yk-5PjckUXyiAecrOjV4lq08k/export?format=csv&gid=1392047986
 ž_liga_2a_krog_1 https://docs.google.com/spreadsheets/d/1krUfXLuar3mC5kginLAvi52eqQBRN2UJ/export?format=csv&gid=1625224394
-ž_liga_2b_krog_1 https://docs.google.com/spreadsheets/d/126yn5t_oIL9SNy9zcbvDjItnZ4J5r7rx/export?format=csv&gid=69911133
+ž_liga_2b_krog_1 https://docs.google.com/spreadsheets/d/126yn5t_oIL9SNy9zcbvDjItnZ4J5r7rx/export?format=csv&gid=699111335
 ž_liga_3a_krog_1 https://docs.google.com/spreadsheets/d/1KCprp_2jlgjHPZrRRQLllvQxWGiehQSA/export?format=csv&gid=552539085
 ž_liga_3b_krog_1 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=372859835
 m_liga_1_krog_2 https://docs.google.com/spreadsheets/d/19nrncP9Yk-5PjckUXyiAecrOjV4lq08k/export?format=csv&gid=580282621
@@ -66,8 +66,7 @@ m_liga_5b_krog_5 https://docs.google.com/spreadsheets/d/1vmetzQco7xx0WRsiwCDyjVm
 ž_liga_1_krog_5 https://docs.google.com/spreadsheets/d/19nrncP9Yk-5PjckUXyiAecrOjV4lq08k/export?format=csv&gid=2088817316
 ž_liga_2a_krog_5 https://docs.google.com/spreadsheets/d/1krUfXLuar3mC5kginLAvi52eqQBRN2UJ/export?format=csv&gid=71033786
 ž_liga_2b_krog_5 https://docs.google.com/spreadsheets/d/126yn5t_oIL9SNy9zcbvDjItnZ4J5r7rx/export?format=csv&gid=1974312096
-ž_liga_3a_krog_5 https://docs.google.com/spreadsheets/d/1KCprp_2jlgjHPZrRRQLllvQxWGiehQSA/export?format=csv&gid=1094838738
-ž_liga_3b_krog_5 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=439329450
+ž_liga_3a_krog_5 https://docs.google.com/spreadsheets/d/1KCprp_2jlgjHPZrRRQLllvQxWGiehQSA/export?format=csv&gid=812049094
 m_liga_1_krog_6 https://docs.google.com/spreadsheets/d/19nrncP9Yk-5PjckUXyiAecrOjV4lq08k/export?format=csv&gid=1284451204
 m_liga_2a_krog_6 https://docs.google.com/spreadsheets/d/1krUfXLuar3mC5kginLAvi52eqQBRN2UJ/export?format=csv&gid=713958848
 m_liga_2b_krog_6 https://docs.google.com/spreadsheets/d/126yn5t_oIL9SNy9zcbvDjItnZ4J5r7rx/export?format=csv&gid=1637048699
