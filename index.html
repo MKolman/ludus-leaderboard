@@ -4,13 +4,37 @@
     <title>Ludus Beach Liga Razvrstitev</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        table { 
-            border-collapse: collapse; 
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            margin-bottom: 0;
         }
 
-        tbody th {
+        table { 
+            border-collapse: collapse; 
+            position: relative;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        tbody th[rowspan] {
             writing-mode: vertical-lr;
             transform: rotate(180deg);
+        }
+        tbody th {
+            position: sticky;
+            left: 1.5em;
+            background: white;
+        }
+
+        tbody th[rowspan] {
+            left: 0
         }
         th, td {
             padding: 5px;
@@ -21,11 +45,6 @@
         }
         tr.league {
             border-top: 3px solid black;
-        }
-
-        table {
-            display: block;
-            overflow: auto;
         }
 
         td.highlight {
@@ -41,17 +60,31 @@
             display: initial;
         }
 
+        input {
+            border-radius: 0.5em;
+            padding: 0.5em;
+            margin-bottom: 1em;
+        }
+
+        button {
+            padding: 0.5em;
+            border-radius: 100vh;
+            font-weight: bold;
+            line-height: 1;
+        }
+
     </style>
 </head>
 <body>
-    <h1>Ludus beach liga razvrstitev </h1>
-    <h3>Podatki so iz <span id="dataAge">2024-02-03</span> <button onclick="reloadData()" id="reload">refresh</button></h3>
-    <input type="text" id="search" oninput="highlightCells(this.value)" placeholder="Isci ekipe"/>
+    <h1>Ludus beach liga razvrstitev</h1>
+    <i>Podatki so iz <span id="dataAge">2024-02-03</span> <button onclick="reloadData()" id="reload">🗘</button></i>
+    <br>
+    <input type="search" id="search" oninput="highlightCells(this.value)" placeholder="Najdi ekipo"/>
     <table id="leaderboard">
         <thead>
             <tr>
-                <th>Liga</th>
-                <th>Mesto</th>
+                <th></th>
+                <th>#</th>
                 <th>1. krog</th>
                 <th>2. krog</th>
                 <th>3. krog</th>
@@ -84,15 +117,16 @@
             }
         }
         async function getRawData() {
-            const dataAge = localStorage.getItem('dataAge')
+            let dataAge = localStorage.getItem('dataAge')
+            let data = localStorage.getItem('data')
             if (dataAge == null) {
-                const result = await (await fetch('data.json')).json()
-                localStorage.setItem('data', JSON.stringify(result))
-                localStorage.setItem('dataAge', +new Date(2024, 2, 3))
-                return result
+                dataAge = 1707129537787
+                data = await (await fetch('data.json')).text()
+                localStorage.setItem('data', data)
+                localStorage.setItem('dataAge', dataAge)
             }
             document.getElementById('dataAge').textContent = new Date(+dataAge).toString()
-            return JSON.parse(localStorage.getItem('data'))
+            return JSON.parse(data)
         }
 
         function getDataAge() {
@@ -102,6 +136,9 @@
         async function reloadData() {
             const button = document.getElementById('reload')
             button.disabled = true
+            for (let tbody of document.querySelectorAll('tbody')) {
+                tbody.remove()
+            }
             const list_of_links = await (await fetch('links.txt')).text()
             const pairs = list_of_links.split('\n').map(
                 line => line.split(' ')
@@ -237,7 +274,7 @@
                 tr.appendChild(th)
                 tr.classList.add('league')
             }
-            const rankTd = document.createElement('td')
+            const rankTd = document.createElement('th')
             rankTd.textContent = rank
             tr.appendChild(rankTd)
             for (let cell of row) {
