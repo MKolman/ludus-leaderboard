@@ -1,0 +1,70 @@
+body {
+	font-family: Arial, sans-serif;
+	min-width: fit-content;
+	margin: 0;
+	border-top: 10px solid #600f3f;
+	padding-left: 8px;
+	padding-right: 8px;
+}
+* {
+	box-sizing: border-box;
+}
+
+h1 {
+	margin-bottom: 0;
+	color: #e42713;
+}
+
+table { 
+	border-collapse: collapse; 
+	position: relative;
+}
+
+thead th {
+	position: sticky;
+	top: 0;
+	background: white;
+	z-index: 1;
+}
+
+tbody th[rowspan] {
+	writing-mode: vertical-lr;
+}
+tbody th {
+	position: sticky;
+	left: 1.5em;
+	background: white;
+}
+
+tbody th[rowspan] {
+	left: 0;
+	width: 1.5em;
+	height: 1.5em;
+}
+th, td {
+	padding: 5px;
+	white-space: nowrap;
+}
+tr {
+	border-top: 1px solid #666;
+}
+tbody {
+	border-top: 3px solid #600f3f;
+}
+
+
+.hidden {
+	display: none;
+}
+.hidden.not-hidden {
+	display: initial;
+}
+
+
+button {
+	padding: 0.5em;
+	border-radius: 100vh;
+	font-weight: bold;
+	line-height: 1;
+}
+
