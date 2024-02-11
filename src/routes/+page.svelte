@@ -25,26 +25,31 @@
 	]);
 	$: rows = ludus.transposeToRows(ranks);
 
-	function highlightClass(txt: string, cleanSearches: string[], hoverHighlight: string) {
+	function highlightClass(txt: string, cleanSearches: string[][], hoverHighlight: string) {
 		const cleanTxt = cleanHighlight(txt);
 		for (let [i, s] of cleanSearches.entries()) {
-			if (s != '' && cleanTxt.includes(s)) {
+			if (shouldHighlight(cleanTxt, s)) {
 				return `highlight highlight-${i % 4}`;
 			}
 		}
-		if (hoverHighlight != '' && cleanTxt.includes(cleanHighlight(hoverHighlight))) {
+		if (shouldHighlight(cleanTxt, cleanHighlight(hoverHighlight))) {
 			return `hover-highlight highlight-${cleanSearches.length % 4}`;
 		}
 		return '';
 	}
 
+	function shouldHighlight(cleanTxt: string[], cleanHighlight: string[]) {
+		if (cleanHighlight.every((s) => s == '')) return false;
+		return cleanHighlight.every((s) => cleanTxt.some((t) => t.includes(s)));
+	}
+
 	function cleanHighlight(txt: string) {
-		return txt.toLowerCase().replace(/ /g, '');
+		return txt.toLowerCase().replace(/[ *]/g, '').split('/');
 	}
 
 	function toggleHighlight(txt: string) {
 		const cleanTxt = cleanHighlight(txt);
-		const index = cleanHighlights.findIndex((s) => cleanTxt.includes(s));
+		const index = cleanHighlights.findIndex((s) => shouldHighlight(cleanTxt, s));
 		if (index == -1) {
 			highlights = [...highlights, txt];
 		} else {
