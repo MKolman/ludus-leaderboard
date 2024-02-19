@@ -1,9 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as ludus from '$lib/ludus';
+	// import { chart } from '$lib/chart';
+	import 'chart.js/auto';
+	import { Line } from 'svelte-chartjs';
 
+	const leaguePadding = 10;
+	const highlightColors = ['#600f3f', '#cc1e47', '#e66a25', '#f9a71a'];
 	let hoverHighlight = '';
-	let highlights: string[] = [];
+	let highlights: string[] = ['Kolman', 'sever'];
 	$: cleanHighlights = highlights.map(cleanHighlight);
 	let dataAge = 1707129537787;
 	let loading = false;
@@ -16,14 +21,23 @@
 	});
 
 	let rawData: [string, string][] = [];
-	let ranks: [string, string[], ludus.Meta][];
+	let rounds: ludus.Round[];
 	let rows: [ludus.Meta, ludus.Table][];
-	$: ranks = rawData.map(([name, txt]) => [
-		name,
-		ludus.getRank(ludus.parseCsv(txt)),
-		ludus.extractMeta(name)
-	]);
-	$: rows = ludus.transposeToRows(ranks);
+	$: rounds = rawData.map(([name, txt]) => new ludus.Round(name, txt));
+	$: rows = ludus.transposeToRows(rounds);
+	let highlightedRanks: { team: string; standings: { meta: ludus.Meta; standing: number }[] }[];
+	$: highlightedRanks = highlights.map((team) => {
+		const ch = cleanHighlight(team);
+		const teamStandings = rounds
+			.map((round) => ({
+				meta: round.meta,
+				standing: round.standings.findIndex((r) => shouldHighlight(cleanHighlight(r), ch))
+			}))
+			.filter(({ standing }) => standing != -1)
+			.sort((a, b) => a.meta.round - b.meta.round);
+
+		return { team, standings: teamStandings };
+	});
 
 	function highlightClass(txt: string, cleanSearches: string[][], hoverHighlight: string) {
 		const cleanTxt = cleanHighlight(txt);
@@ -49,6 +63,7 @@
 
 	function toggleHighlight(txt: string) {
 		const cleanTxt = cleanHighlight(txt);
+		if (cleanTxt.every((s) => s.length === 0)) return;
 		const index = cleanHighlights.findIndex((s) => shouldHighlight(cleanTxt, s));
 		if (index == -1) {
 			highlights = [...highlights, txt];
@@ -78,6 +93,56 @@
 	}
 
 	onMount(fetchRawData);
+	let steppedGraph = false;
+	$: rankDataset = {
+		labels: ['1. krog', '2. krog', '3. krog', '4. krog', '5. krog', '6. krog', '7. krog'],
+		datasets: highlightedRanks.map(({ team, standings }, i) => ({
+			label: team,
+			data: serializeRankForTeam(standings),
+			stepped: steppedGraph ? ('middle' as 'middle') : false,
+			borderColor: highlightColors[i % highlightColors.length],
+			parent: { standings }
+		}))
+	};
+
+	function serializeRankForTeam(ranks: { meta: ludus.Meta; standing: number }[]) {
+		const result = new Array(7).fill(null);
+		ranks.forEach(({ meta, standing }) => {
+			result[meta.round - 1] = standing + (+meta.league[0] - 1) * leaguePadding;
+		});
+		return result;
+	}
+	const chartOptions = {
+		animation: false,
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (context: { parsed: { y: number } }) => {
+						const v = context.parsed.y;
+						return `${Math.floor(v / leaguePadding) + 1}. liga, ${(v % leaguePadding) + 1}. mesto`;
+					}
+				}
+			}
+		},
+		elements: {
+			point: {
+				radius: 5
+			}
+		},
+		responsive: true,
+		scales: {
+			y: {
+				ticks: {
+					stepSize: leaguePadding,
+					callback: (value: number) => {
+						if (value % leaguePadding == 0) return `${value / leaguePadding + 1}. liga`;
+						return null;
+					}
+				},
+				reverse: true
+			}
+		}
+	};
 </script>
 
 <svelte:head>
@@ -130,6 +195,13 @@
 	{/each}
 </table>
 
+<label><input type="checkbox" bind:checked={steppedGraph} />Stopnicast graf (testno)</label>
+<div class="graph">
+	<Line data={rankDataset} width={500} height={500} options={chartOptions} />
+</div>
+<!-- <canvas use:chart={{ type: 'line', data: myData, options: null }}></canvas> -->
+{JSON.stringify(rankDataset)}
+
 <style>
 	.highlight-0 {
 		--highlight-color: #600f3f;
@@ -152,5 +224,9 @@
 		background-color: #f0f0f0;
 		-webkit-text-stroke: 1px var(--highlight-color);
 		color: var(--highlight-color);
+	}
+	.graph {
+		aspect-ratio: 1;
+		max-width: min(100vw, 800px);
 	}
 </style>
