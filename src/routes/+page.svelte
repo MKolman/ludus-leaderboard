@@ -7,9 +7,8 @@
 
 	const leaguePadding = 10;
 	const highlightColors = ['#600f3f', '#cc1e47', '#e66a25', '#f9a71a'];
-	let hoverHighlight = '';
-	let highlights: string[] = ['Kolman', 'sever'];
-	$: cleanHighlights = highlights.map(cleanHighlight);
+	let hoverHighlight: ludus.Team = { name: '', id: NaN };
+	let highlights: ludus.Team[] = [];
 	let dataAge = 1707129537787;
 	let loading = false;
 	$: formattedDataAge = new Date(dataAge).toLocaleString('sl-SI', {
@@ -22,16 +21,15 @@
 
 	let rawData: [string, string][] = [];
 	let rounds: ludus.Round[];
-	let rows: [ludus.Meta, ludus.Table][];
+	let rows: [ludus.Meta, ludus.Team[][]][];
 	$: rounds = rawData.map(([name, txt]) => new ludus.Round(name, txt));
 	$: rows = ludus.transposeToRows(rounds);
-	let highlightedRanks: { team: string; standings: { meta: ludus.Meta; standing: number }[] }[];
+	let highlightedRanks: { team: ludus.Team; standings: { meta: ludus.Meta; standing: number }[] }[];
 	$: highlightedRanks = highlights.map((team) => {
-		const ch = cleanHighlight(team);
 		const teamStandings = rounds
 			.map((round) => ({
 				meta: round.meta,
-				standing: round.standings.findIndex((r) => shouldHighlight(cleanHighlight(r), ch))
+				standing: round.standings.findIndex((t) => t.id == team.id)
 			}))
 			.filter(({ standing }) => standing != -1)
 			.sort((a, b) => a.meta.round - b.meta.round);
@@ -39,36 +37,23 @@
 		return { team, standings: teamStandings };
 	});
 
-	function highlightClass(txt: string, cleanSearches: string[][], hoverHighlight: string) {
-		const cleanTxt = cleanHighlight(txt);
-		for (let [i, s] of cleanSearches.entries()) {
-			if (shouldHighlight(cleanTxt, s)) {
-				return `highlight highlight-${i % 4}`;
-			}
+	function highlightClass(team: ludus.Team, highlighted: ludus.Team[], hover: ludus.Team) {
+		const idx = highlighted.findIndex((t) => t.id === team.id);
+		if (idx != -1) {
+			return `highlight highlight-${idx % 4}`;
 		}
-		if (shouldHighlight(cleanTxt, cleanHighlight(hoverHighlight))) {
-			return `hover-highlight highlight-${cleanSearches.length % 4}`;
+		if (hover.id == team.id) {
+			return `hover-highlight highlight-${highlighted.length % 4}`;
 		}
 		return '';
 	}
 
-	function shouldHighlight(cleanTxt: string[], cleanHighlight: string[]) {
-		if (cleanHighlight.every((s) => s == '')) return false;
-		return cleanHighlight.every((s) => cleanTxt.some((t) => t.includes(s)));
-	}
-
-	function cleanHighlight(txt: string) {
-		return txt.toLowerCase().replace(/[ *]/g, '').split('/');
-	}
-
-	function toggleHighlight(txt: string) {
-		const cleanTxt = cleanHighlight(txt);
-		if (cleanTxt.every((s) => s.length === 0)) return;
-		const index = cleanHighlights.findIndex((s) => shouldHighlight(cleanTxt, s));
-		if (index == -1) {
-			highlights = [...highlights, txt];
+	function toggleHighlight(team: ludus.Team) {
+		const idx = highlights.findIndex((t) => t.id == team.id);
+		if (idx == -1) {
+			highlights = [...highlights, team];
 		} else {
-			highlights.splice(index, 1);
+			highlights.splice(idx, 1);
 			highlights = highlights;
 		}
 	}
@@ -81,7 +66,6 @@
 		}
 		dataAge = age;
 		rawData = data;
-		rawData.sort();
 	}
 
 	async function reloadData() {
@@ -97,7 +81,7 @@
 	$: rankDataset = {
 		labels: ['1. krog', '2. krog', '3. krog', '4. krog', '5. krog', '6. krog', '7. krog'],
 		datasets: highlightedRanks.map(({ team, standings }, i) => ({
-			label: team,
+			label: team.name,
 			data: serializeRankForTeam(standings),
 			stepped: steppedGraph ? ('middle' as 'middle') : false,
 			borderColor: highlightColors[i % highlightColors.length],
@@ -113,7 +97,7 @@
 		return result;
 	}
 	const chartOptions = {
-		animation: false,
+		animation: false as false,
 		plugins: {
 			tooltip: {
 				callbacks: {
@@ -134,7 +118,8 @@
 			y: {
 				ticks: {
 					stepSize: leaguePadding,
-					callback: (value: number) => {
+					callback: (value: string | number) => {
+						value = +value;
 						if (value % leaguePadding == 0) return `${value / leaguePadding + 1}. liga`;
 						return null;
 					}
@@ -155,7 +140,7 @@
 	>Podatki so iz <span>{formattedDataAge}</span>
 	<button on:click={reloadData} disabled={loading}>↻</button></i
 >
-<table id="leaderboard" on:mouseleave={() => (hoverHighlight = '')}>
+<table id="leaderboard" on:mouseleave={() => (hoverHighlight = { name: '', id: -1 })}>
 	<thead>
 		<tr>
 			<th></th>
@@ -184,9 +169,9 @@
 						<td
 							on:mouseenter={() => (hoverHighlight = cell)}
 							on:click={() => toggleHighlight(cell)}
-							class={highlightClass(cell, cleanHighlights, hoverHighlight)}
+							class={highlightClass(cell, highlights, hoverHighlight)}
 						>
-							{cell}
+							{cell.name}
 						</td>
 					{/each}
 				</tr>
@@ -195,12 +180,16 @@
 	{/each}
 </table>
 
-<label><input type="checkbox" bind:checked={steppedGraph} />Stopnicast graf (testno)</label>
+<label><input type="checkbox" bind:checked={steppedGraph} />Stopnicast graf (test)</label>
 <div class="graph">
 	<Line data={rankDataset} width={500} height={500} options={chartOptions} />
 </div>
-<!-- <canvas use:chart={{ type: 'line', data: myData, options: null }}></canvas> -->
-{JSON.stringify(rankDataset)}
+
+{#each highlights as team1, i}
+	{#each highlights.slice(i + 1) as team2}
+		<h1>{team1.name} vs {team2.name}</h1>
+	{/each}
+{/each}
 
 <style>
 	.highlight-0 {

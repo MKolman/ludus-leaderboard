@@ -1,15 +1,19 @@
+import classify from './classify';
+
 export type Table = string[][];
 export type Meta = { round: number; league: string; sex: string; rank?: number };
-
-type Game = { team1: string, team2: string, winner: string, score: string }
+export type Team = { name: string, id: number }
+export type Game = { team1: Team, team2: Team, winner: Team, score: string }
 
 export class Round {
     meta: Meta;
-    standings: string[] = [];
+    standings: Team[] = [];
     games: Game[] = [];
     constructor(name: string, data: string) {
         this.meta = extractMeta(name);
-        this.standings = getRank(parseCsv(data));
+        const table = parseCsv(data)
+        this.standings = getStandings(table);
+        this.games = extractGames(table);
     }
 
 }
@@ -17,11 +21,11 @@ export class Round {
 function parseCsv(txt: string): Table {
     return txt.split('\r\n').map((line) => line.split(','));
 }
-function findFinalRank(data: Table) {
-    const rank = 'KONČNA RAZVRSTITEV';
+
+function findHeader(data: Table, header: string) {
     for (let i = 0; i < data.length; i++) {
         for (let j = 0; j < data[i].length; j++) {
-            if (data[i][j] == rank) {
+            if (data[i][j] == header) {
                 return [i, j];
             }
         }
@@ -29,36 +33,63 @@ function findFinalRank(data: Table) {
     return [null, null];
 }
 
-function extractFinalRank(data: Table, row: number, col: number) {
+function extractGames(data: Table) {
     const result = [];
-    col++;
-    for (let i = row + 1; i < data.length; i++) {
-        if (data[i][col] == '') {
-            break;
-        }
-        result.push(data[i][col]);
+    // Columns:
+    const team1 = 4;
+    const team2 = 17;
+    const sets1 = 10;
+    const sets2 = 11;
+    for (let row = 2; row < data.length && data[row][team1] != ''; row++) {
+        const w1 = +data[row][sets1];
+        const w2 = +data[row][sets2];
+        const t1 = {name: data[row][team1], id: classify(data[row][team1])};
+        const t2 = {name: data[row][team2], id: classify(data[row][team2])};
+        result.push({
+            team1: t1,
+            team2: t2,
+            winner: w1 > w2 ? t1 : t2,
+            score: `${w1}:${w2}`
+        })
     }
     return result;
 }
 
-export function getRank(data: Table): string[] {
-        const [row, col] = findFinalRank(data);
-        if (row == null || col == null) {
-            return [];
+function extractStandings(data: Table, row: number, col: number) {
+    const result = [];
+    col++;
+    for (let i = row + 1; i < data.length && i < row + 9; i++) {
+        const name = data[i][col];
+        if (name == '') {
+            result.push({name: '', id: NaN});
+            continue;
         }
-        return extractFinalRank(data, row, col);
+        result.push({name, id: classify(name)});
     }
+    while (result.length && !result.at(-1)?.id) {
+        result.pop();
+    }
+    return result;
+}
+
+export function getStandings(data: Table): Team[] {
+    const [row, col] = findHeader(data, 'KONČNA RAZVRSTITEV');
+    if (row == null || col == null) {
+        return [];
+    }
+    return extractStandings(data, row, col);
+}
 
 function extractMeta(name: string) {
     const [sex, _l, league, _r, round] = name.split('_');
     return { sex, league, round: +round };
 }
 
-export function transposeToRows(rounds: Round[]): [Meta, Table][] {
-    const transpose = (matrix: Table): Table => {
+export function transposeToRows(rounds: Round[]): [Meta, Team[][]][] {
+    const transpose = <T>(matrix: T[][]): T[][] => {
         const rows = matrix.length;
         const cols = matrix.reduce((maxLen, row) => Math.max(maxLen, row.length), 0);
-        const result = Array.from({ length: cols }, () => Array(rows).fill(''));
+        const result = Array.from({ length: cols }, () => Array(rows).fill({name: '', id: NaN}));
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < matrix[i].length; j++) {
                 result[j][i] = matrix[i][j];
@@ -66,7 +97,7 @@ export function transposeToRows(rounds: Round[]): [Meta, Table][] {
         }
         return result;
     };
-    const result: [Meta, Table][] = [];
+    const result: [Meta, Team[][]][] = [];
     let prevMeta: Meta = { round: 0, league: '', sex: '' };
     let group = [];
     let rank = 1;
