@@ -74,11 +74,11 @@ m_liga_3a_krog_6 https://docs.google.com/spreadsheets/d/1KCprp_2jlgjHPZrRRQLllvQ
 m_liga_3b_krog_6 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=1925804662
 m_liga_4a_krog_6 https://docs.google.com/spreadsheets/d/1KeUDroK-YCSXzwC2aX7pM156BR6xO9WO/export?format=csv&gid=58950808
 m_liga_4b_krog_6 https://docs.google.com/spreadsheets/d/1KeUDroK-YCSXzwC2aX7pM156BR6xO9WO/export?format=csv&gid=277511109
-m_liga_5a_krog_6 https://docs.google.com/spreadsheets/d/1vmetzQco7xx0WRsiwCDyjVmbIZguQk3R/export?format=csv&gid=58950808
+m_liga_5a_krog_6 https://docs.google.com/spreadsheets/d/1vmetzQco7xx0WRsiwCDyjVmbIZguQk3R/export?format=csv&gid=233991202
 m_liga_5b_krog_6 https://docs.google.com/spreadsheets/d/1vmetzQco7xx0WRsiwCDyjVmbIZguQk3R/export?format=csv&gid=277511109
 ž_liga_1_krog_6 https://docs.google.com/spreadsheets/d/19nrncP9Yk-5PjckUXyiAecrOjV4lq08k/export?format=csv&gid=1245643473
 ž_liga_2a_krog_6 https://docs.google.com/spreadsheets/d/1krUfXLuar3mC5kginLAvi52eqQBRN2UJ/export?format=csv&gid=1257507779
-ž_liga_2b_krog_6 https://docs.google.com/spreadsheets/d/126yn5t_oIL9SNy9zcbvDjItnZ4J5r7rx/export?format=csv&gid=45480263
+ž_liga_2b_krog_6 https://docs.google.com/spreadsheets/d/126yn5t_oIL9SNy9zcbvDjItnZ4J5r7rx/export?format=csv&gid=584824329
 ž_liga_3a_krog_6 https://docs.google.com/spreadsheets/d/1KCprp_2jlgjHPZrRRQLllvQxWGiehQSA/export?format=csv&gid=71111063
 ž_liga_3b_krog_6 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=78836343
 m_liga_1_krog_7 https://docs.google.com/spreadsheets/d/19nrncP9Yk-5PjckUXyiAecrOjV4lq08k/export?format=csv&gid=706037264

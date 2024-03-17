@@ -36,6 +36,17 @@
 
 		return { team, standings: teamStandings };
 	});
+	$: pairGames = highlights.flatMap((team1, idx) =>
+		highlights.slice(idx + 1).map((team2) => {
+			const teams = [team1.id, team2.id];
+			const games = rounds.flatMap((round) =>
+				round.games.filter((game) => teams.includes(game.team1.id) && teams.includes(game.team2.id))
+			);
+			const win1 = games.filter((game) => game.winner.id == team1.id).length;
+			games.sort((a, b) => a.meta.round - b.meta.round);
+			return { team1, team2, games, win1, win2: games.length - win1 };
+		})
+	);
 
 	function highlightClass(team: ludus.Team, highlighted: ludus.Team[], hover: ludus.Team) {
 		const idx = highlighted.findIndex((t) => t.id === team.id);
@@ -185,10 +196,20 @@
 	<Line data={rankDataset} width={500} height={500} options={chartOptions} />
 </div>
 
-{#each highlights as team1, i}
-	{#each highlights.slice(i + 1) as team2}
-		<h1>{team1.name} vs {team2.name}</h1>
-	{/each}
+{#each pairGames as { team1, team2, games, win1, win2 }}
+	<h2>{team1.name} vs {team2.name} ({games.length})</h2>
+	{#if games.length == 0}
+		<p>Ni iger.</p>
+	{:else}
+		<p>{team1.name} je zmagal {win1}x, {team2.name} pa {win2}x.</p>
+		<ol>
+			{#each games as game}
+				<li>
+					{game.score} za {game.winner.name} (liga {game.meta.league}, krog {game.meta.round})
+				</li>
+			{/each}
+		</ol>
+	{/if}
 {/each}
 
 <style>

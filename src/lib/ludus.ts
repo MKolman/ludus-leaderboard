@@ -3,7 +3,7 @@ import classify from './classify';
 export type Table = string[][];
 export type Meta = { round: number; league: string; sex: string; rank?: number };
 export type Team = { name: string, id: number }
-export type Game = { team1: Team, team2: Team, winner: Team, score: string }
+export type Game = { meta: Meta, team1: Team, team2: Team, winner: Team, score: string }
 
 export class Round {
     meta: Meta;
@@ -13,7 +13,7 @@ export class Round {
         this.meta = extractMeta(name);
         const table = parseCsv(data)
         this.standings = getStandings(table);
-        this.games = extractGames(table);
+        this.games = extractGames(table).map((game) => ({...game, meta: this.meta}));
     }
 
 }
@@ -45,6 +45,9 @@ function extractGames(data: Table) {
         const w2 = +data[row][sets2];
         const t1 = {name: data[row][team1], id: classify(data[row][team1])};
         const t2 = {name: data[row][team2], id: classify(data[row][team2])};
+        if (w1 == 0 && w2 == 0) {
+            continue;
+        }
         result.push({
             team1: t1,
             team2: t2,
@@ -73,11 +76,15 @@ function extractStandings(data: Table, row: number, col: number) {
 }
 
 export function getStandings(data: Table): Team[] {
-    const [row, col] = findHeader(data, 'KONČNA RAZVRSTITEV');
-    if (row == null || col == null) {
-        return [];
+    for (const [header, colOffset] of [['KONČNA RAZVRSTITEV', 0], ['RAZVRSTITEV', -1]] as [string, number][]) {
+        const [row, col] = findHeader(data, header);
+        if (row === null || col === null) {
+            continue;
+        }
+        const result = extractStandings(data, row, col+colOffset);
+        if (result.length > 0) return result;
     }
-    return extractStandings(data, row, col);
+    return [];
 }
 
 function extractMeta(name: string) {
@@ -147,7 +154,7 @@ export async function loadFromSource(): Promise<{age: number, data: [string, str
         pairs.map(async ([name, link]): Promise<[string, string]> => {
             let response = await fetch(link);
             if (response.status >= 400) {
-                console.log(`Failed to fetch ${name} using ${link}`);
+                console.error(`Failed to fetch ${name} using ${link}`);
                 return [name, ''];
             }
             let text = await response.text();
