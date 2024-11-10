@@ -76,7 +76,7 @@ function extractStandings(data: Table, row: number, col: number) {
 }
 
 export function getStandings(data: Table): Team[] {
-    for (const [header, colOffset] of [['KONČNA RAZVRSTITEV', 0], ['RAZVRSTITEV', -1]] as [string, number][]) {
+    for (const [header, colOffset] of [['KONČNA RAZVRSTITEV', 0], ['RAZVRSTITEV', -1], ['K O N Č N A    R A Z V R S T I T E V', -1]] as [string, number][]) {
         const [row, col] = findHeader(data, header);
         if (row === null || col === null) {
             continue;
@@ -148,7 +148,7 @@ export async function loadFromServer(): Promise<{age: number, data: [string, str
 }
 
 export async function loadFromSource(): Promise<{age: number, data: [string, string][]}> {
-    const listOfLinks = await (await fetch('links.txt')).text();
+    const listOfLinks = await (await fetch('links_2024_25.txt')).text();
     const pairs = listOfLinks.split('\n').map((line) => line.split(' '));
     const result = await Promise.all(
         pairs.map(async ([name, link]): Promise<[string, string]> => {

@@ -71,7 +71,7 @@
 
 	async function fetchRawData() {
 		let { data, age } = ludus.loadFromLocalStorage();
-		if (age == null || data == null) {
+		if (age == null || data == null || age < 1731278741917) {
 			({ data, age } = await ludus.loadFromServer());
 			ludus.saveToLocalStorage(data, age);
 		}
@@ -90,7 +90,7 @@
 	onMount(fetchRawData);
 	let steppedGraph = false;
 	$: rankDataset = {
-		labels: ['1. krog', '2. krog', '3. krog', '4. krog', '5. krog', '6. krog', '7. krog'],
+		labels: ['1. krog', '2. krog', '3. krog', '4. krog', '5. krog', '6. krog'],
 		datasets: highlightedRanks.map(({ team, standings }, i) => ({
 			label: team.name,
 			data: serializeRankForTeam(standings),
@@ -162,7 +162,6 @@
 			<th>4. krog</th>
 			<th>5. krog</th>
 			<th>6. krog</th>
-			<th>7. krog</th>
 		</tr>
 	</thead>
 	{#each rows as [meta, ranks]}
