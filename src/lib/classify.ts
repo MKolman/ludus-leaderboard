@@ -1,4 +1,7 @@
 function clean(txt: string) {
+    if (!txt.includes('/') && txt.includes(' ')) {
+        txt = txt.replace(' ', '/');
+    }
     return txt.toLowerCase().replace(/[ *]/g, '').split('/').sort().join('/');
 }
 

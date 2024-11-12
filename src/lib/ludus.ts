@@ -1,16 +1,17 @@
 import classify from './classify';
 
 export type Table = string[][];
-export type Meta = { round: number; league: string; sex: string; rank?: number };
+export type Meta = { round: number; league: string; sex: string; url: string; date: string; rank?: number };
 export type Team = { name: string; id: number; ranked?: boolean }
 export type Game = { meta: Meta, team1: Team, team2: Team, winner: Team, score: string }
+export type CsvExport = { name: string, data: string, url: string, date: string };
 
 export class Round {
     meta: Meta;
     standings: Team[] = [];
     games: Game[] = [];
-    constructor(name: string, data: string) {
-        this.meta = extractMeta(name);
+    constructor(name: string, data: string, url: string, date: string) {
+        this.meta = extractMeta(name, url, date);
         const table = parseCsv(data)
         this.standings = getStandings(table);
         if (this.standings.every((team) => isNaN(team.id))) {
@@ -39,9 +40,9 @@ function findHeader(data: Table, header: string) {
 function extractTeams(data: Table): Team[] {
     const result = [];
     const included = new Set();
-    for (let row = 1; row < data.length; row++) {
-        for (let col = 0; col < data[row].length; col++) {
-            if (data[row][col].length < 2 || !data[row][col].includes('/') || data[row][col] == '#DIV/0!' || data[row][col].length > 100) {
+    for (let row = 6; row < data.length && row < 20; row++) {
+        for (const col of [5, 12]) {
+            if (data[row][col].length < 3) {
                 continue;
             }
             const id = classify(data[row][col]);
@@ -127,12 +128,12 @@ export function getStandings(data: Table): Team[] {
     return [];
 }
 
-function extractMeta(name: string) {
+function extractMeta(name: string, url: string, date: string): Meta {
     const [sex, _l, league, _r, round] = name.split('_');
-    return { sex, league, round: +round };
+    return { sex, league, round: +round, url, date };
 }
 
-export function transposeToRows(rounds: Round[]): [Meta, Team[][]][] {
+export function transposeToRows(rounds: Round[]): [Meta[], Team[][]][] {
     const transpose = <T>(matrix: T[][]): T[][] => {
         const rows = matrix.length;
         const cols = matrix.reduce((maxLen, row) => Math.max(maxLen, row.length), 0);
@@ -144,63 +145,80 @@ export function transposeToRows(rounds: Round[]): [Meta, Team[][]][] {
         }
         return result;
     };
-    const result: [Meta, Team[][]][] = [];
-    let prevMeta: Meta = { round: 0, league: '', sex: '' };
+    const result: [Meta[], Team[][]][] = [];
+    let prevMetas: Meta[] = [];
     let group = [];
     let rank = 1;
     for (let {meta, standings} of rounds) {
-        if (prevMeta.round > meta.round) {
-            prevMeta.rank = rank;
-            if (prevMeta.league.endsWith('b')) {
-                prevMeta.rank -= result[result.length - 1][1]?.length;
+        if (prevMetas.length > 0 && prevMetas[prevMetas.length - 1].round > meta.round) {
+            if (prevMetas[0].league.endsWith('b')) {
+                prevMetas[0].rank = (prevMetas[0].rank || 0) - result[result.length - 1][1]?.length;
+            }
+            if (prevMetas[0].sex != meta.sex) {
+                rank = 1;
             }
             const rows = transpose(group);
-            group = [];
             rank += rows.length;
-            result.push([prevMeta, rows]);
+            result.push([prevMetas, rows]);
+            group = [];
+            prevMetas = [];
         }
-        if (prevMeta.sex != meta.sex) {
-            rank = 1;
-        }
+        meta.rank = rank;
         group.push(standings);
-        prevMeta = meta;
+        prevMetas.push(meta);
     }
-    result.push([prevMeta, transpose(group)]);
+    result.push([prevMetas, transpose(group)]);
     return result;
 }
 
-export function loadFromLocalStorage(): {age: number|null, data: [string, string][]|null} {
+export function loadFromLocalStorage(): {age: number|null, data: CsvExport[]|null} {
     return {age: JSON.parse(localStorage.getItem('dataAge') || 'null'), data: JSON.parse(localStorage.getItem('data') || 'null')};
 }
 
-export function saveToLocalStorage(data: [string, string][], age?: string|number) {
+export function saveToLocalStorage(data: CsvExport[], age?: string|number) {
     if (!age) {
         age = (+new Date());
     }
-    data.sort();
+    data.sort((a, b) => a.name < b.name ? -1 : 1);
     localStorage.setItem('data', JSON.stringify(data));
     localStorage.setItem('dataAge', age.toString());
 }
 
-export async function loadFromServer(): Promise<{age: number, data: [string, string][]}> {
-    const data = await (await fetch('data.json')).json() as [string, string][];
-    return {age: 1707129537787, data: data.sort()};
+export async function loadFromServer(): Promise<{age: number, data: CsvExport[]}> {
+    const data = await (await fetch('data.json')).json() as CsvExport[];
+    return {age: 1731450605191, data: data.sort((a, b) => a.name < b.name ? -1 : 1)};
 }
 
-export async function loadFromSource(): Promise<{age: number, data: [string, string][]}> {
+function exportUrlToView(url: string): string {
+    // before: https://docs.google.com/spreadsheets/d/1krUfXLuar3mC5kginLAvi52eqQBRN2UJ/export?format=csv&gid=1637852195
+    // after:  https://docs.google.com/spreadsheets/d/1krUfXLuar3mC5kginLAvi52eqQBRN2UJ/view?format=csv&gid=1637852195
+    return url.replace('/export?format=csv&', '/view?');
+
+}
+
+function dateFromHeaders(headers: Headers): string {
+    // attachment; filename="2.ALIGA-5.krogmoki15.2..csv"; filename*=UTF-8''2.A%20LIGA%20-%205.%20krog%20mo%C5%A1ki%20%2815.%202.%29.csv
+    const cd = headers.get('content-disposition');
+    const encFilename = cd?.split("filename*=UTF-8''")[1] || '((??))'
+    const filename = decodeURIComponent(encFilename)
+    return filename.slice(filename.indexOf('(')+1, filename.lastIndexOf(')'));
+}
+
+export async function loadFromSource(): Promise<{age: number, data: CsvExport[]}> {
     const listOfLinks = await (await fetch('links_2024_25.txt')).text();
     const pairs = listOfLinks.split('\n').map((line) => line.split(' '));
     const result = await Promise.all(
-        pairs.map(async ([name, link]): Promise<[string, string]> => {
-            let response = await fetch(link);
+        pairs.map(async ([name, link]): Promise<CsvExport> => {
+            const response = await fetch(link);
+            const date = dateFromHeaders(response.headers);
             if (response.status >= 400) {
                 console.error(`Failed to fetch ${name} using ${link}`);
-                return [name, ''];
+                return {name, data: '', url: exportUrlToView(link), date};
             }
-            let text = await response.text();
-            return [name, text];
+            let data = await response.text();
+            return {name, data, url: exportUrlToView(link), date};
         })
     );
-    result.sort();
+    result.sort((a, b) => a.name < b.name ? -1 : 1);
     return {age: +new Date(), data: result};
 }

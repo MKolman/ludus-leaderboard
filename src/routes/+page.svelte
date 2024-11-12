@@ -9,7 +9,7 @@
 	const highlightColors = ['#600f3f', '#cc1e47', '#e66a25', '#f9a71a'];
 	let hoverHighlight: ludus.Team = { name: '', id: NaN };
 	let highlights: ludus.Team[] = [];
-	let dataAge = 1707129537787;
+	let dataAge = 1731450605191;
 	let loading = false;
 	$: formattedDataAge = new Date(dataAge).toLocaleString('sl-SI', {
 		year: 'numeric',
@@ -19,10 +19,10 @@
 		minute: 'numeric'
 	});
 
-	let rawData: [string, string][] = [];
+	let rawData: ludus.CsvExport[] = [];
 	let rounds: ludus.Round[];
-	let rows: [ludus.Meta, ludus.Team[][]][];
-	$: rounds = rawData.map(([name, txt]) => new ludus.Round(name, txt));
+	let rows: [ludus.Meta[], ludus.Team[][]][];
+	$: rounds = rawData.map(({name, data, url, date}) => new ludus.Round(name, data, url, date));
 	$: rows = ludus.transposeToRows(rounds);
 	let highlightedRanks: { team: ludus.Team; standings: { meta: ludus.Meta; standing: number }[] }[];
 	$: highlightedRanks = highlights.map((team) => {
@@ -71,7 +71,7 @@
 
 	async function fetchRawData() {
 		let { data, age } = ludus.loadFromLocalStorage();
-		if (age == null || data == null || age < 1731278741917) {
+		if (age == null || data == null || age < 1731450605191) {
 			({ data, age } = await ludus.loadFromServer());
 			ludus.saveToLocalStorage(data, age);
 		}
@@ -164,17 +164,24 @@
 			<th>6. krog</th>
 		</tr>
 	</thead>
-	{#each rows as [meta, ranks]}
+	{#each rows as [metas, ranks]}
 		<tbody>
+			<tr>
+				<td></td>
+				<td></td>
+				{#each metas as meta}
+					<td>{meta.date} <a href={meta.url} target="_blank">🗎</a></td>
+				{/each}
+			</tr>
 			{#each ranks as row, i}
 				<tr>
 					{#if i === 0}
 						<th class="league" rowSpan={ranks.length}>
-							{meta.sex == 'm' ? 'Moški' : 'Ženske'}
-							{meta.league}
+							{metas[0].sex == 'm' ? 'Moški' : 'Ženske'}
+							{metas[0].league}
 						</th>
 					{/if}
-					<th>{(meta.rank || 1) + i}</th>
+					<th>{(metas[0].rank || 1) + i}</th>
 					{#each row as cell}
 						<td
 							on:mouseenter={() => (hoverHighlight = cell)}
