@@ -63,9 +63,13 @@ m_liga_3b_krog_1 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwU
 m_liga_3b_krog_2 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=923450918
 ž_liga_3b_krog_2 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=1406726251
 m_liga_3b_krog_3 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=158950440
+ž_liga_3b_krog_3 /blank.csv
 m_liga_3b_krog_4 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=1006129724
+ž_liga_3b_krog_4 /blank.csv
 m_liga_3b_krog_5 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=454287453
+ž_liga_3b_krog_5 /blank.csv
 m_liga_3b_krog_6 https://docs.google.com/spreadsheets/d/1_mBAdtua7p2iicayRCLwYwUf4kX8bceu/export?format=csv&gid=1019537541
+ž_liga_3b_krog_6 /blank.csv
 m_liga_4a_krog_1 https://docs.google.com/spreadsheets/d/1KeUDroK-YCSXzwC2aX7pM156BR6xO9WO/export?format=csv&gid=760448186
 m_liga_4a_krog_2 https://docs.google.com/spreadsheets/d/1KeUDroK-YCSXzwC2aX7pM156BR6xO9WO/export?format=csv&gid=740903134
 m_liga_4a_krog_3 https://docs.google.com/spreadsheets/d/1KeUDroK-YCSXzwC2aX7pM156BR6xO9WO/export?format=csv&gid=679899211
