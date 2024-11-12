@@ -34,15 +34,33 @@ function findHeader(data: Table, header: string) {
 }
 
 function extractGames(data: Table) {
+    const score = (sets1: string[], sets2: string[]): [number, number] => {
+        const result: [number, number] = [0, 0];
+        for (let i = 0, j=0; i < sets1.length && j < sets2.length; i++, j++) {
+            if (sets1[i].length == 0) {
+                j--;
+                continue;
+            }
+            if (sets2[j].length == 0) {
+                i--;
+                continue;
+            }
+            result[+sets1[i] < +sets2[j]?1:0]++;
+        }
+        return result;
+    }
+
     const result = [];
     // Columns:
-    const team1 = 4;
-    const team2 = 17;
-    const sets1 = 10;
-    const sets2 = 11;
-    for (let row = 2; row < data.length && data[row][team1] != ''; row++) {
-        const w1 = +data[row][sets1];
-        const w2 = +data[row][sets2];
+    const team1 = 5;
+    const team2 = 12;
+    const sets1 = 6;
+    const sets2 = 7;
+    for (let row = 6; row < data.length; row++) {
+        if (!data[row][team1].includes('/') || !data[row][team2].includes('/')) {
+            continue;
+        }
+        const [w1, w2] = score([data[row][sets1], data[row][sets1+2], data[row][sets1+4]], [data[row][sets2], data[row][sets2+2], data[row][sets2+4]]);
         const t1 = {name: data[row][team1], id: classify(data[row][team1])};
         const t2 = {name: data[row][team2], id: classify(data[row][team2])};
         if (w1 == 0 && w2 == 0) {
@@ -63,7 +81,7 @@ function extractStandings(data: Table, row: number, col: number) {
     col++;
     for (let i = row + 1; i < data.length && i < row + 9; i++) {
         const name = data[i][col];
-        if (name == '') {
+        if (name.length < 3) {
             result.push({name: '', id: NaN});
             continue;
         }
