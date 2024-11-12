@@ -172,7 +172,11 @@ export function transposeToRows(rounds: Round[]): [Meta[], Team[][]][] {
 }
 
 export function loadFromLocalStorage(): {age: number|null, data: CsvExport[]|null} {
-    return {age: JSON.parse(localStorage.getItem('dataAge') || 'null'), data: JSON.parse(localStorage.getItem('data') || 'null')};
+    const result =  {age: JSON.parse(localStorage.getItem('dataAge') || 'null'), data: JSON.parse(localStorage.getItem('data') || 'null')};
+    if (result.data && !result.data[0].name) {
+        return {age: null, data: null};
+    }
+    return result;
 }
 
 export function saveToLocalStorage(data: CsvExport[], age?: string|number) {
