@@ -180,6 +180,7 @@
 							on:mouseenter={() => (hoverHighlight = cell)}
 							on:click={() => toggleHighlight(cell)}
 							class={highlightClass(cell, highlights, hoverHighlight)}
+							class:future={!cell.ranked}
 						>
 							{cell.name}
 						</td>
@@ -223,6 +224,10 @@
 	}
 	.highlight-3 {
 		--highlight-color: #f9a71a;
+	}
+	.future {
+		color: #888;
+		font-style: italic;
 	}
 	td.highlight {
 		-webkit-text-stroke: 1px white;

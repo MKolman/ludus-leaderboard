@@ -2,7 +2,7 @@ import classify from './classify';
 
 export type Table = string[][];
 export type Meta = { round: number; league: string; sex: string; rank?: number };
-export type Team = { name: string, id: number }
+export type Team = { name: string; id: number; ranked?: boolean }
 export type Game = { meta: Meta, team1: Team, team2: Team, winner: Team, score: string }
 
 export class Round {
@@ -13,6 +13,9 @@ export class Round {
         this.meta = extractMeta(name);
         const table = parseCsv(data)
         this.standings = getStandings(table);
+        if (this.standings.every((team) => isNaN(team.id))) {
+            this.standings = extractTeams(table);
+        }
         this.games = extractGames(table).map((game) => ({...game, meta: this.meta}));
     }
 
@@ -31,6 +34,25 @@ function findHeader(data: Table, header: string) {
         }
     }
     return [null, null];
+}
+
+function extractTeams(data: Table): Team[] {
+    const result = [];
+    const included = new Set();
+    for (let row = 1; row < data.length; row++) {
+        for (let col = 0; col < data[row].length; col++) {
+            if (data[row][col].length < 2 || !data[row][col].includes('/') || data[row][col] == '#DIV/0!' || data[row][col].length > 100) {
+                continue;
+            }
+            const id = classify(data[row][col]);
+            if (included.has(id)) {
+                continue;
+            }
+            included.add(id);
+            result.push({name: data[row][col], id});
+        }
+    }
+    return result;
 }
 
 function extractGames(data: Table) {
@@ -85,7 +107,7 @@ function extractStandings(data: Table, row: number, col: number) {
             result.push({name: '', id: NaN});
             continue;
         }
-        result.push({name, id: classify(name)});
+        result.push({name, id: classify(name), ranked: true});
     }
     while (result.length && !result.at(-1)?.id) {
         result.pop();
