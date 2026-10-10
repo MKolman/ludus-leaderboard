@@ -1,38 +1,56 @@
-# create-svelte
+# Ludus beach liga razvrstitev
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+Frontend-only React app that reads the Ludus beach volleyball league data from
+public Google Sheets, parses it in the browser and visualises it.
 
-## Creating a project
+- **Teams table** – one section per league (and per A/B division), one column per
+  round. Each cell names the team occupying that position, so a team that moves
+  between leagues appears in different sections/rows across the season. Section
+  headers include the date each round is played.
+- **Team selection** – click teams to select them. One team shows all of its
+  games; two or more show the head-to-head record for every pair.
+- **Chart** – position (or points) of the selected teams across rounds.
 
-If you're seeing this, you've probably already done this step. Congrats!
+Data is fetched live from Google Sheets on load and cached in `localStorage` for
+a week. Use the **↻ Osveži** button to force a refresh.
+
+## Data source
+
+The spreadsheets live in the public Google Drive folder **1. REZULTATI**
+(`1ECL_oZlCaI29wW8ZF8pde-ZdEDNFkeiu`), split into `MOŠKI` and `ŽENSKE`
+subfolders. Each league has one spreadsheet with a tab per round; a `LESTVICA`
+spreadsheet holds the master team/league/points table.
+
+`src/data/sources.json` is a generated manifest listing every spreadsheet and
+its tabs. Regenerate it when the season or spreadsheet structure changes:
 
 ```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
+npm run sources
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Verify the whole pipeline (downloads the sheets and parses them) with:
 
 ```bash
+npm run check-data
+```
+
+## Development
+
+```bash
+npm install
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
-
-To create a production version of your app:
+## Build & deploy
 
 ```bash
-npm run build
+npm run build      # static output in dist/
+npm run deploy     # build + publish to gh-pages
 ```
 
-You can preview the production build with `npm run preview`.
+## Lint & typecheck
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+```bash
+npm run lint
+npm run typecheck
+```
